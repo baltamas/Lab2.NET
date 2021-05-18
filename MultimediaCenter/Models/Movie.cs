@@ -26,5 +26,6 @@ namespace MultimediaCenter.Models
         [Range(1, 10)]
         public float Rating { get; set; }
         public bool Watched { get; set; }
+        public List<Comment> Comments { get; set; }
     }
 }
