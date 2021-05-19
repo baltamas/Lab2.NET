@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using MultimediaCenter.Data;
 using MultimediaCenter.Models;
 using MultimediaCenter.ViewModels;
@@ -16,10 +17,13 @@ namespace MultimediaCenter.Controllers
     public class MoviesController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly ILogger<MoviesController> _logger;
 
-        public MoviesController(ApplicationDbContext context)
+
+        public MoviesController(ApplicationDbContext context, ILogger<MoviesController> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         [HttpGet]
@@ -27,9 +31,35 @@ namespace MultimediaCenter.Controllers
         public ActionResult<IEnumerable<Movie>> FilterMovies(int minReleaseYear)
         {
             var query = _context.Movies.Where(m => m.ReleaseYear >= minReleaseYear);
-            Console.WriteLine(query.ToQueryString());
+            _logger.LogInformation(query.ToQueryString());
             return query.ToList();
 
+        }
+
+        [HttpGet("{id}/Comments")]
+        public ActionResult<IEnumerable<Object>> GetCommentsForMovies (int id)
+        {
+            var query = _context.Comments.Where(c => c.Movie.Id == id).Include(c => c.Movie).Select(c => new
+            {
+                Movie = c.Movie.Title,
+                Comment = c.Content
+            });
+            _logger.LogInformation(query.ToQueryString());
+            return query.ToList();
+        }
+
+        [HttpPost("{id}/Comments")]
+        public IActionResult PostCommentForMovie(int id, Comment comment)
+        {
+            comment.Movie = _context.Movies.Find(id);
+            if (comment.Movie == null)
+            {
+                return NotFound();
+            }
+            _context.Comments.Add(comment);
+            _context.SaveChanges();
+
+            return Ok();
         }
 
         [HttpGet]
