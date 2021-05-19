@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -18,12 +19,14 @@ namespace MultimediaCenter.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly ILogger<MoviesController> _logger;
+        private readonly IMapper _mapper;
 
 
-        public MoviesController(ApplicationDbContext context, ILogger<MoviesController> logger)
+        public MoviesController(ApplicationDbContext context, ILogger<MoviesController> logger, IMapper mapper)
         {
             _context = context;
             _logger = logger;
+            _mapper = mapper; 
         }
 
         [HttpGet]
@@ -86,8 +89,12 @@ namespace MultimediaCenter.Controllers
 
             });
 
+            var query_v3 = _context.Movies.Where(m => m.Id == id).Include(m => m.Comments).Select(m => _mapper.Map<MovieWithCommentsViewModels>(m));
+
             _logger.LogInformation(query_v1.ToQueryString());
-            return query_v2.ToList();
+            _logger.LogInformation(query_v2.ToQueryString());
+            _logger.LogInformation(query_v3.ToQueryString());
+            return query_v3.ToList();
         }
 
         [HttpPost("{id}/Comments")]
@@ -130,25 +137,13 @@ namespace MultimediaCenter.Controllers
         public async Task<ActionResult<MovieViewModel>> GetMovie(int id)
         {
             var movie = await _context.Movies.FindAsync(id);
-            var movieViewModel = new MovieViewModel
-            {
-                Id = movie.Id,
-                Title = movie.Title,
-                Description = movie.Description,
-                Genre = movie.Genre,
-                Duration = movie.Duration,
-                ReleaseYear = movie.ReleaseYear,
-                Director = movie.Director,
-                DateAdded = movie.DateAdded,
-                Rating = movie.Rating,
-                Watched = movie.Watched
-
-            };
 
             if (movie == null)
             {
                 return NotFound();
             }
+
+            var movieViewModel = _mapper.Map<MovieViewModel>(movie);
 
             return movieViewModel;
         }
