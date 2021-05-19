@@ -37,15 +37,57 @@ namespace MultimediaCenter.Controllers
         }
 
         [HttpGet("{id}/Comments")]
-        public ActionResult<IEnumerable<Object>> GetCommentsForMovies (int id)
+        public ActionResult<IEnumerable<MovieWithCommentsViewModels>> GetCommentsForMovies (int id)
         {
-            var query = _context.Comments.Where(c => c.Movie.Id == id).Include(c => c.Movie).Select(c => new
+            var query_v1 = _context.Comments.Where(c => c.Movie.Id == id).Include(c => c.Movie).Select(c => new MovieWithCommentsViewModels
             {
-                Movie = c.Movie.Title,
-                Comment = c.Content
+              Id = c.Movie.Id,
+              Title = c.Movie.Title,
+              Description = c.Movie.Description,
+              Genre = c.Movie.Genre,
+              Duration = c.Movie.Duration,
+              ReleaseYear = c.Movie.ReleaseYear,
+              Director = c.Movie.Director,
+              DateAdded = c.Movie.DateAdded,
+              Rating = c.Movie.Rating,
+              Watched = c.Movie.Watched,
+              Comments = c.Movie.Comments.Select(pc => new CommentViewModel 
+              {
+                  Id = pc.Id,
+                  Content = pc.Content,
+                  DateTime = pc.DateTime,
+                  Stars = pc.Stars
+
+})
+               
             });
-            _logger.LogInformation(query.ToQueryString());
-            return query.ToList();
+
+            var query_v2 = _context.Movies.Where(m => m.Id == id).Include(m => m.Comments).Select(m => new MovieWithCommentsViewModels
+            {
+
+                Id = m.Id,
+                Title = m.Title,
+                Description = m.Description,
+                Genre = m.Genre,
+                Duration = m.Duration,
+                ReleaseYear = m.ReleaseYear,
+                Director = m.Director,
+                DateAdded = m.DateAdded,
+                Rating = m.Rating,
+                Watched = m.Watched,
+                Comments = m.Comments.Select(pc => new CommentViewModel
+                {
+                    Id = pc.Id,
+                    Content = pc.Content,
+                    DateTime = pc.DateTime,
+                    Stars = pc.Stars
+
+                })
+
+            });
+
+            _logger.LogInformation(query_v1.ToQueryString());
+            return query_v2.ToList();
         }
 
         [HttpPost("{id}/Comments")]
