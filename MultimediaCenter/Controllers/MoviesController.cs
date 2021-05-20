@@ -100,13 +100,23 @@ namespace MultimediaCenter.Controllers
         [HttpPost("{id}/Comments")]
         public IActionResult PostCommentForMovie(int id, Comment comment)
         {
-            comment.Movie = _context.Movies.Find(id);
-            if (comment.Movie == null)
+
+            var movies = _context.Movies.Where(m => m.Id == id).Include(m => m.Comments).FirstOrDefault();
+            if(movies == null)
             {
                 return NotFound();
             }
-            _context.Comments.Add(comment);
+            movies.Comments.Add(comment);
+            _context.Entry(movies).State = EntityState.Modified;
             _context.SaveChanges();
+            
+           
+            //comment.Movie = _context.Movies.Find(id);
+            //if (comment.Movie == null)
+            //{
+            //}
+            //_context.Comments.Add(comment);
+            //_context.SaveChanges();
 
             return Ok();
         }
