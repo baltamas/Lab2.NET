@@ -89,8 +89,10 @@ namespace MultimediaCenter.Controllers
 
             });
 
-            var query_v3 = _context.Movies.Where(m => m.Id == id).Include(m => m.Comments).Select(m => _mapper.Map<MovieWithCommentsViewModels>(m));
-
+            var query_v3 = _context.Movies.Where(m => m.Id == id).Include(m => m.Comments).Select(m => _mapper.Map<MovieWithCommentsViewModels>(m)); 
+            var queryForCommentMovieId = _context.Comments;
+            _logger.LogInformation(queryForCommentMovieId.ToList()[0].MovieId.ToString());
+            //_logger.LogInformation(queryForCommentMovieId.ToList()[0].Movie.ToString);
             _logger.LogInformation(query_v1.ToQueryString());
             _logger.LogInformation(query_v2.ToQueryString());
             _logger.LogInformation(query_v3.ToQueryString());
